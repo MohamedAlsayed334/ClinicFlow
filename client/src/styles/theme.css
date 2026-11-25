@@ -1,0 +1,16 @@
+:root {
+  --color-primary: #0d9488;
+  --color-primary-light: #5eead4;
+  --color-navy: #1e293b;
+  --color-mint: #a7f3d0;
+  --color-bg: #f0f4f8;
+  --color-amber: #f59e0b;
+  --color-white: #ffffff;
+  --bs-font-sans-serif: "Cairo", sans-serif;
+}
+
+body {
+  font-family: "Cairo", sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-navy);
+}
