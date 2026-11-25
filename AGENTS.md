@@ -27,7 +27,7 @@ Before adding any package outside the lists above, stop and ask.
   README.md
   SPEC.md
   PHASES.md
-  CLAUDE.md
+  AGENTS.md
 ```
 
 ## Code rules
@@ -66,6 +66,13 @@ Before adding any package outside the lists above, stop and ask.
 - One branch per phase: `phase-0-setup`, `phase-1-api-core`, and so on. Never commit directly to `main`.
 - Small commits using Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`).
 - At the end of each phase: run lint, format check, and tests; commit; print a short report; stop and wait for the owner to review.
+
+## Agent safety
+
+- Run terminal commands one at a time and explain what each one does before running it.
+- Never run destructive commands (`rm -rf`, `git reset --hard`, `git push --force`, `git clean -fd`) or any command outside this repository folder without asking first.
+- Never push to the remote. The owner pushes from GitHub Desktop.
+- Never read, print, or commit secrets. Do not paste the contents of `.env` files into the chat.
 
 ## Phase report format
 

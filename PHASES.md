@@ -1,14 +1,22 @@
-# PHASES: build order and prompts for Claude Code
+# PHASES: build order and prompts for the Antigravity agent
 
-Work one phase at a time. Give Claude Code one prompt, wait for its report, run the verification commands yourself, review the code, then move on. Do not paste several phases at once.
+Work one phase at a time. Give the Antigravity agent (the chat panel inside the IDE) one prompt, wait for its report, run the verification commands yourself, review the code, then move on. Do not paste several phases at once.
+
+## Antigravity notes
+
+- Use the agent panel inside the IDE. There is no `claude` terminal command.
+- Pick the strongest model available in the model selector for every phase.
+- Keep terminal command approval on (review each command). Do not auto-approve everything.
+- Paste one phase prompt per conversation. Start a new conversation for each phase so the context stays clean.
+- If the agent ignores a rule, tell it to re-read `AGENTS.md` and `SPEC.md`.
 
 ## Before Phase 0 (owner does this by hand)
 
-1. Create an empty GitHub repo and clone it.
-2. Copy `CLAUDE.md`, `SPEC.md`, `PHASES.md` to the repo root.
+1. Clone the existing ClinicFlow repo with GitHub Desktop and create the branch `phase-0-setup`.
+2. Copy `AGENTS.md`, `SPEC.md`, `PHASES.md` to the repo root. Antigravity loads `AGENTS.md` automatically as a rule. `SPEC.md` is read by the agent when a prompt tells it to.
 3. Create a `design/` folder and put the design screenshots in it (names: `home-desktop.png`, `results-desktop.png`, `booking-desktop.png`, `confirmation-desktop.png`).
 4. Create a free MongoDB Atlas cluster, a database user, allow your IP, and copy the connection string.
-5. Install Node.js 20 or newer, Git, and Docker Desktop.
+5. Install Node.js 20 or newer and Git. Docker Desktop can wait until Phase 6.
 
 Mapping to the original task plan: SH-1 to SH-4 are settled in `SPEC.md`. BE-1 to BE-8 are Phases 1 and 2. FE-1 to FE-8 and UI-1 to UI-8 are Phases 3 to 6. QA and DOC tasks are spread through all phases and finish in Phase 6.
 
@@ -19,7 +27,7 @@ Mapping to the original task plan: SH-1 to SH-4 are settled in `SPEC.md`. BE-1 t
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md fully, then do Phase 0 from PHASES.md.
+Read AGENTS.md and SPEC.md fully, then do Phase 0 from PHASES.md.
 
 Create branch phase-0-setup. Scaffold:
 - client/: Vite + React + TypeScript, Bootstrap 5 with the RTL build, @fontsource/cairo, React Router. html lang="ar" dir="rtl". A placeholder home page only.
@@ -28,7 +36,7 @@ Create branch phase-0-setup. Scaffold:
 - Dockerfile for each app and docker-compose.yml as described in SPEC.md section 11.
 - .gitignore, .env.example files, and a first README.md skeleton.
 
-Do not build any feature yet. Finish with the phase report format from CLAUDE.md.
+Do not build any feature yet. Finish with the phase report format from AGENTS.md.
 ```
 
 **Done when:** `npm run dev` works in both folders, `GET /api/health` returns OK and the server connects to Atlas, `docker compose up` starts both, lint and tests pass.
@@ -40,7 +48,7 @@ Do not build any feature yet. Finish with the phase report format from CLAUDE.md
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md. Do Phase 1 from PHASES.md on branch phase-1-api-core.
+Read AGENTS.md and SPEC.md. Do Phase 1 from PHASES.md on branch phase-1-api-core.
 
 Build in server/:
 1. Mongoose models: User, Specialty, Area, Doctor, Appointment, with the indexes in SPEC.md section 3.
@@ -64,7 +72,7 @@ Do not build auth or booking yet. Finish with the phase report.
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md. Do Phase 2 from PHASES.md on branch phase-2-auth-booking.
+Read AGENTS.md and SPEC.md. Do Phase 2 from PHASES.md on branch phase-2-auth-booking.
 
 Build in server/:
 1. Auth: register, login, logout, me. bcrypt, JWT in an httpOnly cookie, login rate limiting, helmet, cookie-parser, CORS with credentials. Middleware: optionalAuth, requireAuth, requireAdmin.
@@ -85,7 +93,7 @@ Finish with the phase report.
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md, and study every screenshot in design/. Do Phase 3 from PHASES.md on branch phase-3-client-foundation.
+Read AGENTS.md and SPEC.md, and study every screenshot in design/. Do Phase 3 from PHASES.md on branch phase-3-client-foundation.
 
 Build in client/:
 1. theme.css with CSS variables sampled from the screenshots, Bootstrap overrides, global RTL and Cairo setup.
@@ -109,7 +117,7 @@ Finish with the phase report.
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md, and compare against the screenshots in design/. Do Phase 4 from PHASES.md on branch phase-4-public-pages.
+Read AGENTS.md and SPEC.md, and compare against the screenshots in design/. Do Phase 4 from PHASES.md on branch phase-4-public-pages.
 
 Build:
 1. Home page: hero with a hand-written medical inline SVG illustration (no plus placeholder), search card with specialty and area dropdowns loaded from /api/metadata, popular specialty chips, suggested doctors.
@@ -131,7 +139,7 @@ Do not build auth pages or admin pages yet. Finish with the phase report.
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md. Do Phase 5 from PHASES.md on branch phase-5-accounts-admin.
+Read AGENTS.md and SPEC.md. Do Phase 5 from PHASES.md on branch phase-5-accounts-admin.
 
 Build:
 1. Login and register pages with inline validation and server error mapping, redirect after login (admin to /admin/doctors, patient back to where they came from).
@@ -152,13 +160,13 @@ Finish with the phase report.
 **Prompt**
 
 ```
-Read CLAUDE.md and SPEC.md. Do Phase 6 from PHASES.md on branch phase-6-polish.
+Read AGENTS.md and SPEC.md. Do Phase 6 from PHASES.md on branch phase-6-polish.
 
 1. Audit every page for the four states (loading, error, empty, success), the server-unreachable case, and the slot-taken case. Fix gaps.
 2. Audit every page at 390px, 768px, and 1280px. No horizontal scroll, no clipped chips, touch targets at least 44px.
 3. Complete the README.md per SPEC.md section 12, including exact setup steps for Atlas, Docker, seeding, and tests.
 4. Confirm docker compose up works end to end from a clean clone.
-5. Run all tests, lint, and format check in both apps. Write the missing tests for any endpoint or flow listed in CLAUDE.md that is not yet covered.
+5. Run all tests, lint, and format check in both apps. Write the missing tests for any endpoint or flow listed in AGENTS.md that is not yet covered.
 6. Add docs/QA-CHECKLIST.md with a manual test checklist: guest booking, logged-in booking, double-booking race, cancel before and after the 3-hour limit, guest lookup with a wrong phone, admin add doctor, admin schedule edit, admin cancel, mobile pass.
 
 Finish with the phase report and a list of known limitations.
@@ -173,5 +181,5 @@ Finish with the phase report and a list of known limitations.
 - Run the verification commands yourself. Do not trust the report alone.
 - Read the diff. You must be able to explain every file to a teacher.
 - Merge the phase branch into `main` through a GitHub pull request only when you are satisfied.
-- If a phase goes wrong, do not stack the next phase on top. Ask Claude Code to fix it first.
-- If Claude Code proposes a package outside the allowed list in `CLAUDE.md`, say no or check with your instructor first.
+- If a phase goes wrong, do not stack the next phase on top. Ask the agent to fix it first.
+- If the agent proposes a package outside the allowed list in `AGENTS.md`, say no or check with your instructor first.
