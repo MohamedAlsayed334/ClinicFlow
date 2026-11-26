@@ -93,7 +93,7 @@ export async function runSeed(): Promise<void> {
       passwordHash,
       role: "admin",
     },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   );
 
   const specialtyNames = ["عيون", "باطنة", "جلدية", "أطفال", "أسنان"];
