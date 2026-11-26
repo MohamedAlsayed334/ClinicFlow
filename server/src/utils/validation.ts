@@ -36,3 +36,7 @@ export function isValidEmail(raw: string): boolean {
 export function isValidPassword(raw: string): boolean {
   return raw.length >= 8;
 }
+
+export function isValidObjectId(raw: string): boolean {
+  return /^[a-fA-F0-9]{24}$/.test(raw);
+}
