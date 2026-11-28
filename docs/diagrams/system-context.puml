@@ -1,0 +1,21 @@
+@startuml system-context
+title ClinicFlow - System Context
+
+actor "Guest" as Guest
+actor "Patient" as Patient
+actor "Admin" as Admin
+
+rectangle "ClinicFlow" as System {
+  component "React client\nArabic RTL" as Client
+  component "Express API" as API
+}
+
+database "MongoDB\nlocal (dev) or Atlas (demo)" as DB
+
+Guest --> Client : browse, book, lookup
+Patient --> Client : account booking
+Admin --> Client : dashboard
+Client --> API : JSON over /api, cookie included
+API --> DB : Mongoose
+
+@enduml

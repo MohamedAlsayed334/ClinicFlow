@@ -1,0 +1,31 @@
+@startuml cancellation-sequence
+title Guest Lookup and Cancellation
+
+actor Guest
+participant "React client" as UI
+participant "GET /api/appointments/lookup" as Lookup
+participant "POST /api/appointments/cancel" as Cancel
+database MongoDB as DB
+
+Guest -> UI : enter booking code + mobile
+UI -> Lookup : GET ?code=&phone=
+Lookup -> DB : find by code, verify phone
+
+alt code or phone wrong
+  DB --> Lookup : no match
+  Lookup --> UI : 404 NOT_FOUND (same response)
+else match
+  DB --> Lookup : appointment + canCancel
+  Lookup --> UI : {appointment}
+  Guest -> UI : confirm cancellation
+  UI -> Cancel : POST {code, phone}
+  alt less than 3 hours before start
+    Cancel --> UI : 422 CANCEL_WINDOW_PASSED
+  else allowed
+    Cancel -> DB : confirmed -> cancelled
+    DB --> Cancel : updated appointment
+    Cancel --> UI : {appointment}
+  end
+end
+
+@enduml

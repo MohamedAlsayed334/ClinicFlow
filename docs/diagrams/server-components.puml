@@ -1,0 +1,29 @@
+@startuml server-components
+title ClinicFlow - Server Component Layers
+
+package "server/src" {
+  [routes] as Routes
+  [controllers] as Controllers
+  [services] as Services
+  [models] as Models
+  [middleware/errorHandler] as Errors
+  [utils/validation] as Validation
+  [content/ar.ts] as Arabic
+  [config/env + config/db] as Config
+}
+
+Routes --> Controllers : dispatch
+Controllers --> Services : business logic
+Services --> Models : Mongoose only here
+Routes --> Errors : central error handler
+Controllers ..> Validation : input checks
+Controllers ..> Arabic : messages
+Errors ..> Arabic : messages
+Config --> Models : connection + env
+
+note bottom of Services
+  Slot generation is a pure Luxon service;
+  controllers never touch Mongoose directly.
+end note
+
+@enduml

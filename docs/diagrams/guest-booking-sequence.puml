@@ -1,0 +1,31 @@
+@startuml guest-booking-sequence
+title Guest Booking Flow
+
+actor Guest
+participant "React client" as UI
+participant "GET /api/doctors/:id/slots" as Slots
+participant "POST /api/appointments" as Book
+database MongoDB as DB
+
+Guest -> UI : open doctor page
+UI -> Slots : GET slots
+Slots -> DB : doctor + confirmed appointments
+DB --> Slots
+Slots --> UI : UTC slots grouped by Cairo day
+
+Guest -> UI : pick day and time, enter name + mobile
+UI -> Book : {doctorId, startsAt, patientName, patientPhone}
+Book -> DB : insert appointment
+
+alt duplicate key on {doctor, startsAt}
+  DB --> Book : E11000
+  Book --> UI : 409 SLOT_TAKEN
+  UI -> Slots : refresh slots
+  UI -> UI : clear selection, show Arabic alert
+else inserted
+  DB --> Book : appointment
+  Book --> UI : 201 {appointment}
+  UI -> UI : show code and confirmation page
+end
+
+@enduml

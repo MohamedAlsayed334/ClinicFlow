@@ -1,0 +1,82 @@
+@startuml database-er
+title ClinicFlow - Database ER Diagram
+
+hide circle
+skinparam linetype ortho
+
+entity USER {
+  *id : ObjectId <<PK>>
+  --
+  *name : string
+  *email : string <<unique>>
+  *passwordHash : string
+  *role : "patient" | "admin"
+  createdAt : datetime
+  updatedAt : datetime
+}
+
+entity SPECIALTY {
+  *id : ObjectId <<PK>>
+  --
+  *nameAr : string <<unique>>
+  createdAt : datetime
+  updatedAt : datetime
+}
+
+entity AREA {
+  *id : ObjectId <<PK>>
+  --
+  *nameAr : string <<unique>>
+  createdAt : datetime
+  updatedAt : datetime
+}
+
+entity DOCTOR {
+  *id : ObjectId <<PK>>
+  --
+  *nameAr : string
+  *titleAr : string
+  *specialtyId : ObjectId <<FK>>
+  *areaId : ObjectId <<FK>>
+  yearsOfExperience : number
+  rating : number
+  reviewCount : number
+  consultationFee : number
+  clinicName : string
+  clinicAddress : string
+  weeklySchedule : array
+  isActive : boolean
+  createdAt : datetime
+  updatedAt : datetime
+}
+
+entity APPOINTMENT {
+  *id : ObjectId <<PK>>
+  --
+  *code : string <<unique>>
+  *doctorId : ObjectId <<FK>>
+  userId : ObjectId <<FK, nullable>>
+  *patientName : string
+  *patientPhone : string
+  *startsAt : datetime UTC
+  *endsAt : datetime UTC
+  status : "confirmed" | "cancelled"
+  cancelledAt : datetime
+  cancelledBy : "guest" | "patient" | "admin"
+  createdAt : datetime
+  updatedAt : datetime
+}
+
+SPECIALTY ||--o{ DOCTOR : "specialty"
+AREA ||--o{ DOCTOR : "area"
+DOCTOR ||--o{ APPOINTMENT : "doctor"
+USER |o--o{ APPOINTMENT : "optional user"
+
+note right of APPOINTMENT
+  Unique partial index:
+  { doctor: 1, startsAt: 1 }
+  where status = "confirmed"
+  Source of truth for double-booking prevention.
+end note
+
+@enduml
