@@ -1,0 +1,27 @@
+@startuml container-architecture
+title ClinicFlow - Container Diagram
+
+actor User
+
+node "Browser" {
+  component "React 19 + Vite\nBootstrap 5 RTL + Cairo" as SPA
+}
+
+node "Application host" {
+  component "Express 5 API\nport 4000" as API
+  component "Mongoose models\nand services" as DataAccess
+}
+
+database "MongoDB" as Mongo
+
+User --> SPA : HTTPS
+SPA --> API : fetch /api/*\ncredentials: include
+API --> DataAccess
+DataAccess --> Mongo
+
+note right of API
+  JWT in httpOnly cookie
+  helmet + restricted CORS
+end note
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml slot-generation-activity
+title Slot Generation (computed on request)
+
+start
+:Read Cairo "today" + next 6 days;
+
+repeat for each date
+  :Find weeklySchedule entry for weekday;
+  if (no entry?) then (yes)
+    :No slots that day;
+  else (no)
+    :Split [startTime, endTime) into 30-minute slots;
+    :Drop slots at or before now;
+    :Drop slots with confirmed appointments;
+  endif
+end repeat
+
+:Group remaining slots by Cairo date label;
+:nextAvailableSlot = first remaining slot or null;
+stop
+
+@enduml

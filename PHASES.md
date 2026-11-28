@@ -1,185 +1,213 @@
-# PHASES: build order and prompts for the Antigravity agent
+# PHASES — build order and gates
 
-Work one phase at a time. Give the Antigravity agent (the chat panel inside the IDE) one prompt, wait for its report, run the verification commands yourself, review the code, then move on. Do not paste several phases at once.
+Work one phase at a time. Each phase has an **entry gate** (what must be true before starting), a **work prompt** (what the agent implements), and an **exit gate** (what must be true before merging). The agent reads `AGENTS.md`, `requirements.md`, and `architecture.md` before starting.
 
-## Antigravity notes
+Change nothing outside the current phase. If a phase is blocked, stop and report instead of stacking the next phase on top.
 
-- Use the agent panel inside the IDE. There is no `claude` terminal command.
-- Pick the strongest model available in the model selector for every phase.
-- Keep terminal command approval on (review each command). Do not auto-approve everything.
-- Paste one phase prompt per conversation. Start a new conversation for each phase so the context stays clean.
-- If the agent ignores a rule, tell it to re-read `AGENTS.md` and `SPEC.md`.
+## Current status
 
-## Before Phase 0 (owner does this by hand)
+| Phase | Branch / PR | Scope | Status |
+|---|---|---|---|
+| 0 | `phase-0-setup`, PR #1 | Repo setup and tooling | **Merged** |
+| 1 | `phase-1-api-core`, PR #3 | API core | **Merged** |
+| 2 | `phase-2-auth-booking` | Auth, booking, cancellation, admin API | **Next** |
+| 3 | `phase-3-client-foundation` | Client foundation | Planned |
+| 4 | `phase-4-public-pages` | Public pages | Planned |
+| 5 | `phase-5-accounts-admin` | Accounts, appointments, admin UI | Planned |
+| 6 | `phase-6-polish` | Polish, QA, docs | Planned |
 
-1. Clone the existing ClinicFlow repo with GitHub Desktop and create the branch `phase-0-setup`.
-2. Copy `AGENTS.md`, `SPEC.md`, `PHASES.md` to the repo root. Antigravity loads `AGENTS.md` automatically as a rule. `SPEC.md` is read by the agent when a prompt tells it to.
-3. Create a `design/` folder and put the design screenshots in it (names: `home-desktop.png`, `results-desktop.png`, `booking-desktop.png`, `confirmation-desktop.png`).
-4. Create a free MongoDB Atlas cluster, a database user, allow your IP, and copy the connection string.
-5. Install Node.js 20 or newer and Git. Docker Desktop can wait until Phase 6.
+PR #2 was closed because its commits predated the rebase of Phase 0; PR #3 carries the identical Phase 1 tree on top of current `main`.
 
-Mapping to the original task plan: SH-1 to SH-4 are settled in `SPEC.md`. BE-1 to BE-8 are Phases 1 and 2. FE-1 to FE-8 and UI-1 to UI-8 are Phases 3 to 6. QA and DOC tasks are spread through all phases and finish in Phase 6.
+## Owner prerequisites
 
----
-
-## Phase 0: Repo setup (DOC-3 foundations)
-
-**Prompt**
-
-```
-Read AGENTS.md and SPEC.md fully, then do Phase 0 from PHASES.md.
-
-Create branch phase-0-setup. Scaffold:
-- client/: Vite + React + TypeScript, Bootstrap 5 with the RTL build, @fontsource/cairo, React Router. html lang="ar" dir="rtl". A placeholder home page only.
-- server/: Express + TypeScript, ts-node-dev or tsx for dev, a GET /api/health endpoint, central error-handling middleware, env loading, MongoDB connection via Mongoose using MONGODB_URI.
-- ESLint and Prettier in both apps, with lint, format, format:check, and test scripts. Vitest configured in both, with one trivial passing test each.
-- Dockerfile for each app and docker-compose.yml as described in SPEC.md section 11.
-- .gitignore, .env.example files, and a first README.md skeleton.
-
-Do not build any feature yet. Finish with the phase report format from AGENTS.md.
-```
-
-**Done when:** `npm run dev` works in both folders, `GET /api/health` returns OK and the server connects to Atlas, `docker compose up` starts both, lint and tests pass.
+- Node.js 20+ and Git installed.
+- MongoDB available: local `mongod` on port 27017 for development, or an Atlas cluster for demo/grading.
+- `design/` screenshots added before Phase 3: `home-desktop.png`, `results-desktop.png`, `booking-desktop.png`, `confirmation-desktop.png`. They are not in the repository yet.
+- Docker Desktop optional until Phase 6.
 
 ---
 
-## Phase 1: API core (BE-1 to BE-5, part of QA)
+## Phase 0 — Repo setup (done)
 
-**Prompt**
+**Entry gate:** empty repository with a README heading.
+
+**Work completed:** Vite + React + TypeScript client with Bootstrap RTL, Cairo, React Router, and a placeholder home; Express + TypeScript server with `/api/health`, central error handler, env loading, and Mongoose connection; ESLint, Prettier, Vitest, Dockerfiles, `docker-compose.yml`, `.env.example` files, and root documentation.
+
+**Exit gate:** `npm run dev` works in both apps, `/api/health` returns OK, `docker compose up` starts both, lint and tests pass. Verified locally against MongoDB on port 27017. Atlas connectivity remains an owner check.
+
+---
+
+## Phase 1 — API core (done)
+
+**Entry gate:** Phase 0 merged and green.
+
+**Work completed:** Mongoose models with a unique partial confirmed-slot index; Arabic messages and validation helpers; pure Luxon slot generator; idempotent seed script; `GET /api/metadata`, `GET /api/doctors`, `GET /api/doctors/:id`, `GET /api/doctors/:id/slots`; Supertest integration tests.
+
+**Exit gate:** 25/25 server tests pass, seed produces 24 doctors with about 12 pediatric doctors in مدينة نصر, slots are UTC ISO strings. The database-dependent acceptance check is an owner command (`cd server && npm run seed`) because no Atlas credentials were used by the agent.
+
+**Carry-over:** model-level schedule validators and the health failure test are scheduled for Phases 2 and 6.
+
+---
+
+## Phase 2 — Auth, booking, cancellation, admin API (next)
+
+**Branch:** `phase-2-auth-booking`
+
+**Entry gate:** `main` contains Phases 0 and 1 and both apps pass lint, format check, tests, and build.
+
+**Prompt:**
 
 ```
-Read AGENTS.md and SPEC.md. Do Phase 1 from PHASES.md on branch phase-1-api-core.
+Read AGENTS.md, requirements.md, and PHASES.md. Do Phase 2 on branch phase-2-auth-booking.
 
 Build in server/:
-1. Mongoose models: User, Specialty, Area, Doctor, Appointment, with the indexes in SPEC.md section 3.
-2. Shared Arabic content file for messages, and the validation helpers in SPEC.md section 4 (Egyptian mobile normalization and validation, name, email, password).
-3. The slot generator service (SPEC.md section 5) using Luxon and Africa/Cairo, as a pure, well-tested function.
-4. The seed script (SPEC.md section 8) and npm run seed.
-5. Endpoints: GET /api/metadata, GET /api/doctors (all filters, sorting, pagination, nextAvailableSlot), GET /api/doctors/:id, GET /api/doctors/:id/slots.
-6. The standard error format from SPEC.md section 6.
+1. Auth: register, login, logout, me with bcrypt, JWT in an httpOnly cookie,
+   login rate limiting, helmet, cookie-parser, and CORS with credentials.
+   Add optionalAuth, requireAuth, and requireAdmin middleware.
+2. Appointments: POST /api/appointments with optional auth, 8-character codes,
+   double-booking protection via the unique partial index (translate
+   duplicate-key errors to SLOT_TAKEN), lookup, guest cancel, my appointments,
+   and patient cancel with the 3-hour rule.
+3. Admin API: doctor list/create/edit/schedule-replace/soft-delete with the
+   future-appointments check and schedule validation, appointments list with
+   filters, and admin cancel without the 3-hour restriction.
+4. Encode weeklySchedule validation in the Doctor model: one entry per day,
+   startTime < endTime, and 30-minute boundaries.
 
-Tests: slot generator (weekday mapping, 30-minute boundaries, past slots removed, taken slots removed, DST-safe), phone validation (Arabic digits, valid and invalid prefixes), and every endpoint above with Supertest and mongodb-memory-server.
-
-Do not build auth or booking yet. Finish with the phase report.
+Tests: concurrent booking of one slot (exactly one success), cancellation at
+and just under 3 hours, wrong-phone lookup returning 404, ownership checks,
+non-admin rejection on every admin endpoint, and validation field maps.
+Finish with the phase report from AGENTS.md.
 ```
 
-**Done when:** after `npm run seed`, the search for specialty أطفال in مدينة نصر returns about 12 doctors, slots are returned as UTC ISO strings, and all tests pass.
+**Exit gate:** full HTTP flow works (register → login → book → list → cancel), concurrent-booking test passes, non-admin cannot reach admin routes, and all verification commands exit 0.
 
 ---
 
-## Phase 2: Auth, booking, cancellation, admin API (BE-6 to BE-8)
+## Phase 3 — Client foundation
 
-**Prompt**
+**Branch:** `phase-3-client-foundation`
 
-```
-Read AGENTS.md and SPEC.md. Do Phase 2 from PHASES.md on branch phase-2-auth-booking.
+**Entry gate:** Phase 2 merged; `design/` screenshots present; server API contract stable.
 
-Build in server/:
-1. Auth: register, login, logout, me. bcrypt, JWT in an httpOnly cookie, login rate limiting, helmet, cookie-parser, CORS with credentials. Middleware: optionalAuth, requireAuth, requireAdmin.
-2. Appointments: POST /api/appointments with optional auth, booking code generation, and double-booking protection through the unique partial index (translate the duplicate-key error to SLOT_TAKEN). Lookup, guest cancel, my appointments, patient cancel, with the 3-hour rule and the exact error codes in SPEC.md.
-3. Admin API: doctors CRUD with soft delete and the future-appointments check, schedule replacement with validation (30-minute boundaries, startTime < endTime), appointments list with filters, admin cancel.
-
-Tests: concurrent booking of the same slot (two parallel requests, exactly one succeeds), cancellation exactly at 3 hours and just under, guest lookup with wrong phone returns 404, ownership checks on patient cancel, every admin endpoint rejects non-admins, validation failures return the fields map.
-
-Finish with the phase report.
-```
-
-**Done when:** the full flow works through an HTTP client (register, login, book, list, cancel), the concurrent-booking test passes, and a non-admin cannot reach admin routes.
-
----
-
-## Phase 3: Client foundation (FE-1, UI-1, UI-2 base)
-
-**Prompt**
+**Prompt:**
 
 ```
-Read AGENTS.md and SPEC.md, and study every screenshot in design/. Do Phase 3 from PHASES.md on branch phase-3-client-foundation.
+Read AGENTS.md, requirements.md, architecture.md, and every screenshot in design/.
+Do Phase 3 on branch phase-3-client-foundation.
 
 Build in client/:
-1. theme.css with CSS variables sampled from the screenshots, Bootstrap overrides, global RTL and Cairo setup.
-2. A typed API client (fetch wrapper with credentials, error parsing into the SPEC.md error format, Arabic fallback message).
-3. Auth context (me, login, register, logout) and route guards for patient and admin.
-4. Layout: header (responsive, collapses on mobile, per SPEC.md section 7) and footer.
-5. Reusable components: Button, Card, Chip, FormField with inline error, Spinner, EmptyState, ErrorState, Alert, Pagination, Avatar (name initial in a circle).
-6. The Arabic content file, the client copy of the phone validation helpers with the same tests as the server, and the router with all routes from SPEC.md section 7 as placeholders.
+1. theme.css with variables sampled from the screenshots, Bootstrap RTL
+   overrides, global RTL, and Cairo font setup.
+2. Typed API client: fetch wrapper with credentials and SPEC error parsing
+   into the requirements.md error shape, with an Arabic fallback message.
+3. Auth context and route guards for patient and admin.
+4. Responsive header and footer per requirements.md.
+5. Reusable Button, Card, Chip, FormField, Spinner, EmptyState, ErrorState,
+   Alert, Pagination, and Avatar components.
+6. Arabic content file, client phone validation helper with the same tests as
+   the server, and all routes from requirements.md as placeholders.
 
-Every component must be RTL-correct, padded, and have centered button text. Verify at 390px and at desktop width. Add component tests for FormField, Chip selection, and the phone helper.
+Verify at 390px and desktop. Add tests for FormField, Chip selection, and the
+phone helper. Finish with the phase report.
+```
 
+**Exit gate:** every route renders a placeholder inside the real layout, the header works on mobile, and component tests pass.
+
+---
+
+## Phase 4 — Public pages
+
+**Branch:** `phase-4-public-pages`
+
+**Entry gate:** Phase 3 merged; public endpoints verified.
+
+**Prompt:**
+
+```
+Read AGENTS.md, requirements.md, architecture.md, and compare with design/.
+Do Phase 4 on branch phase-4-public-pages.
+
+Build:
+1. Home with hand-written inline SVG hero, metadata-driven search card,
+   popular specialties, and suggested doctors.
+2. Results with count, active chips, filters, sort, pagination, doctor cards,
+   and URL query-param state.
+3. Doctor/booking page in the order from requirements.md: day chips, time
+   chips, patient form, summary, confirm button last. Handle SLOT_TAKEN with
+   an inline alert, slot refresh, and cleared selection.
+4. Confirmation page and guest lookup/cancel with confirmation dialog.
+
+Apply the UI rules from AGENTS.md and keep 390px free of horizontal scroll.
+Add React Testing Library tests for search form, slot selection, booking form
+validation, and confirmation rendering. Do not build auth or admin pages yet.
 Finish with the phase report.
 ```
 
-**Done when:** all routes render a placeholder inside the real layout, the header works on mobile, and the component tests pass.
+**Exit gate:** a guest can search, pick a slot, book, see the code, look the booking up, and cancel it on desktop and at 390px.
 
 ---
 
-## Phase 4: Public pages (FE-2 to FE-5, UI-3, UI-4, UI-7, UI-8)
+## Phase 5 — Accounts, appointments, admin UI
 
-**Prompt**
+**Branch:** `phase-5-accounts-admin`
+
+**Entry gate:** Phase 4 merged; auth and admin APIs verified.
+
+**Prompt:**
 
 ```
-Read AGENTS.md and SPEC.md, and compare against the screenshots in design/. Do Phase 4 from PHASES.md on branch phase-4-public-pages.
+Read AGENTS.md, requirements.md, and architecture.md. Do Phase 5 on branch phase-5-accounts-admin.
 
 Build:
-1. Home page: hero with a hand-written medical inline SVG illustration (no plus placeholder), search card with specialty and area dropdowns loaded from /api/metadata, popular specialty chips, suggested doctors.
-2. Search results page: results count, active filter chips, filters sidebar (fee, rating), sort (earliest, rating, fee), pagination, doctor cards. URL query params drive the state so the page is shareable.
-3. Doctor and booking page in the exact order in SPEC.md section 7: day chips, time chips with a clear selected state, patient form, summary, then the confirm button. Handle SLOT_TAKEN as specified. Prefill name for logged-in users.
-4. Confirmation page and the guest lookup and cancel page. Cancel flow with a confirmation dialog and the CANCEL_WINDOW_PASSED message.
+1. Login and register with inline validation, server error mapping, and
+   redirects (admin to /admin/doctors, patient to the previous page).
+2. My appointments with upcoming/past lists and cancel hidden or disabled
+   when canCancel is false, with a short explanation.
+3. Admin doctors table, doctor form with weekly schedule editor, and
+   appointments table with filters and admin cancel.
 
-Apply the UI fixes list in SPEC.md section 7. Make every page responsive at 390px with no horizontal scroll. Tests with React Testing Library: search form, slot selection state, booking form validation, confirmation page rendering.
-
-Do not build auth pages or admin pages yet. Finish with the phase report.
+All admin pages are guarded and responsive. Add tests for login validation,
+route guards, and schedule editor validation. Finish with the phase report.
 ```
 
-**Done when:** a guest can search, pick a slot, book, see the confirmation with the code, look the booking up, and cancel it, all on desktop and at 390px.
+**Exit gate:** an admin can add a doctor with a schedule and a guest can book that doctor immediately; a patient sees and cancels their own appointments.
 
 ---
 
-## Phase 5: Auth pages, my appointments, admin dashboard
+## Phase 6 — Polish, QA, docs
 
-**Prompt**
+**Branch:** `phase-6-polish`
 
-```
-Read AGENTS.md and SPEC.md. Do Phase 5 from PHASES.md on branch phase-5-accounts-admin.
+**Entry gate:** Phases 0–5 merged; feature-complete product.
 
-Build:
-1. Login and register pages with inline validation and server error mapping, redirect after login (admin to /admin/doctors, patient back to where they came from).
-2. My appointments page with upcoming and past lists, cancel with confirmation, and the 3-hour rule reflected in the UI (hide or disable the cancel button when canCancel is false, with a short explanation).
-3. Admin area: doctors table (search, pagination, edit, delete with confirmation and the HAS_FUTURE_APPOINTMENTS message), doctor form with a weekly schedule editor (per weekday: on/off, start, end, 30-minute steps), and the appointments table with filters and admin cancel.
-
-All admin pages are guarded and responsive (tables scroll inside their own container on mobile). Tests: login form validation, route guards, schedule editor validation.
-
-Finish with the phase report.
-```
-
-**Done when:** an admin can add a doctor with a schedule and a guest can then book that doctor immediately; a patient sees and cancels their own bookings.
-
----
-
-## Phase 6: States, mobile polish, Docker, docs, final QA (UI-5, UI-6, FE-6, FE-8, QA-1, QA-2, DOC-1 to DOC-3)
-
-**Prompt**
+**Prompt:**
 
 ```
-Read AGENTS.md and SPEC.md. Do Phase 6 from PHASES.md on branch phase-6-polish.
+Read AGENTS.md, requirements.md, architecture.md, and PHASES.md. Do Phase 6 on branch phase-6-polish.
 
-1. Audit every page for the four states (loading, error, empty, success), the server-unreachable case, and the slot-taken case. Fix gaps.
-2. Audit every page at 390px, 768px, and 1280px. No horizontal scroll, no clipped chips, touch targets at least 44px.
-3. Complete the README.md per SPEC.md section 12, including exact setup steps for Atlas, Docker, seeding, and tests.
-4. Confirm docker compose up works end to end from a clean clone.
-5. Run all tests, lint, and format check in both apps. Write the missing tests for any endpoint or flow listed in AGENTS.md that is not yet covered.
-6. Add docs/QA-CHECKLIST.md with a manual test checklist: guest booking, logged-in booking, double-booking race, cancel before and after the 3-hour limit, guest lookup with a wrong phone, admin add doctor, admin schedule edit, admin cancel, mobile pass.
+1. Audit every page for loading, error, empty, success, server-unreachable,
+   and slot-taken states. Fix gaps.
+2. Audit at 390px, 768px, and 1280px: no horizontal scroll, no clipped chips,
+   touch targets at least 44px.
+3. Update README.md with Atlas/local setup, Docker, seeding, tests, structure,
+   and links to requirements.md and architecture.md.
+4. Add docs/QA-CHECKLIST.md covering guest booking, logged-in booking,
+   double-booking race, cancellation boundaries, wrong-phone lookup, admin
+   doctor/schedule/cancel, and mobile.
+5. Confirm docker compose up works from a clean clone after filling both
+   .env files. Run all tests, lint, and format checks in both apps.
+6. Add the missing health failure test and any other uncovered required test.
 
-Finish with the phase report and a list of known limitations.
+Finish with the phase report and known limitations.
 ```
 
-**Done when:** a fresh clone can run with `docker compose up` after filling the two `.env` files, and every item in the QA checklist passes.
+**Exit gate:** a fresh clone runs with `docker compose up` and every QA checklist item passes.
 
----
+## Between phases
 
-## Rules for the owner between phases
-
-- Run the verification commands yourself. Do not trust the report alone.
-- Read the diff. You must be able to explain every file to a teacher.
-- Merge the phase branch into `main` through a GitHub pull request only when you are satisfied.
-- If a phase goes wrong, do not stack the next phase on top. Ask the agent to fix it first.
-- If the agent proposes a package outside the allowed list in `AGENTS.md`, say no or check with your instructor first.
+- Verify commands yourself; a phase report is not proof.
+- Read the diff and be able to explain every file.
+- Merge only through a reviewed pull request. Keep `main` linear with rebase-and-merge.
+- Fix a broken phase before starting the next one.
+- Ask the owner before adding anything outside the `AGENTS.md` technology boundary.

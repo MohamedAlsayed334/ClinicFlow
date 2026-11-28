@@ -1,0 +1,15 @@
+@startuml appointment-state
+title Appointment State Machine
+
+[*] --> confirmed : POST /api/appointments
+
+confirmed --> cancelled : guest / patient / admin cancel
+
+cancelled --> [*]
+
+note right of cancelled
+  The confirmed slot becomes available again.
+  cancelledBy records who cancelled.
+end note
+
+@enduml

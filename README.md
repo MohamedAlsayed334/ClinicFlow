@@ -87,6 +87,17 @@ cd server && npm test
 cd client && npm test
 ```
 
+## Seeding the Database
+
+After setting `MONGODB_URI` and the admin credentials in `server/.env`:
+
+```bash
+cd server
+npm run seed
+```
+
+The seed is idempotent and recreates specialties, areas, doctors, appointments, and the admin user.
+
 ## Linting and Formatting
 
 ```bash
@@ -102,20 +113,22 @@ npm run format:check  # check formatting without fixing
 /
 ├── client/          React + TypeScript + Vite + Bootstrap RTL
 ├── server/          Node.js + Express + TypeScript + Mongoose
-├── design/          Reference screenshots (read-only)
+├── design/          Reference screenshots (read-only, added before Phase 3)
+├── docs/diagrams/   PlantUML sources for architecture and data diagrams
 ├── docker-compose.yml
 ├── README.md
-├── SPEC.md          Full product specification
-├── PHASES.md        Build phases
+├── requirements.md  Functional and non-functional requirements
+├── architecture.md  System structure, data model, and diagrams
+├── PHASES.md        Build order, status, and gates
 └── AGENTS.md        Agent rules and constraints
 ```
 
 ## API
 
-See [SPEC.md](SPEC.md) for the full API specification, data model, and validation rules.
+See [requirements.md](requirements.md) for the API contract and [architecture.md](architecture.md) for the data model and flows.
 
 ## Git Workflow
 
 - One branch per phase: `phase-0-setup`, `phase-1-api-core`, etc.
 - Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`
-- Merge into `main` only through pull requests after review.
+- Merge into `main` only through reviewed pull requests; keep history linear with rebase-and-merge.
